@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snakes and Ladders</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(10, 50px);
+            grid-template-rows: repeat(10, 50px);
+            width: 500px;
+            margin: 20px auto;
+            border: 2px solid #333;
+        }
+        .cell {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #ccc;
+            position: relative;
+        }
+        .cell:nth-child(even) {
+            background-color: #e0e0e0;
+        }
+        .player {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            position: absolute;
+        }
+        .player1 {
+            background-color: red;
+        }
+        .player2 {
+            background-color: blue;
+        }
+        .controls {
+            margin-top: 20px;
+        }
+        .dice {
+            font-size: 24px;
+            font-weight: bold;
+            padding: 10px 20px;
+            border: 2px solid #333;
+            background-color: #fff;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .winner {
+            margin-top: 20px;
+            font-size: 24px;
+            color: green;
+        }
+        .animation {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+        }
+        .animation img {
+            width: 100px;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Snakes and Ladders</h1>
+    <div class="board" id="board"></div>
+    <div class="controls">
+        <button class="dice" id="rollDice">Roll Dice</button>
+        <p>Dice Roll: <span id="diceValue">-</span></p>
+        <p>Current Player: <span id="currentPlayer">1</span></p>
+    </div>
+    <div class="winner" id="winner"></div>
+
+    <script>
+        const board = document.getElementById('board');
+        const diceValue = document.getElementById('diceValue');
+        const currentPlayerDisplay = document.getElementById('currentPlayer');
+        const winnerDisplay = document.getElementById('winner');
+
+        const rollDiceButton = document.getElementById('rollDice');
+
+        const boardSize = 10;
+        const totalCells = boardSize * boardSize;
+        const players = [
+            { id: 1, position: 0, color: 'player1' },
+            { id: 2, position: 0, color: 'player2' }
+        ];
+        let currentPlayerIndex = 0;
+
+        const snakes = {
+            16: 6,
+            48: 26,
+            49: 11,
+            56: 53,
+            62: 19,
+            87: 24,
+            93: 73,
+            95: 75,
+            98: 78
+        };
+
+        const ladders = {
+            1: 38,
+            4: 14,
+            9: 31,
+            21: 42,
+            28: 84,
+            36: 44,
+            51: 67,
+            71: 91,
+            80: 100
+        };
+
+        function createBoard() {
+            for (let i = totalCells; i > 0; i--) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.setAttribute('data-cell', i);
+                cell.textContent = i;
+                board.appendChild(cell);
+            }
+        }
+
+        function movePlayer(player, steps) {
+            const oldPosition = player.position;
+            let newPosition = oldPosition + steps;
+
+            if (newPosition > totalCells) {
+                newPosition = oldPosition; // Prevent overflow
+            }
+
+            if (snakes[newPosition]) {
+                showAnimation('snake');
+                newPosition = snakes[newPosition];
+            } else if (ladders[newPosition]) {
+                showAnimation('ladder');
+                newPosition = ladders[newPosition];
+            }
+
+            updatePlayerPosition(player, oldPosition, newPosition);
+
+            if (newPosition === totalCells) {
+                winnerDisplay.textContent = `Player ${player.id} wins!`;
+                rollDiceButton.disabled = true;
+            }
+        }
+
+        function updatePlayerPosition(player, oldPosition, newPosition) {
+            const oldCell = document.querySelector(`[data-cell='${oldPosition}']`);
+            if (oldCell) {
+                const token = oldCell.querySelector(`.${player.color}`);
+                if (token) {
+                    oldCell.removeChild(token);
+                }
+            }
+
+            const newCell = document.querySelector(`[data-cell='${newPosition}']`);
+            const playerToken = document.createElement('div');
+            playerToken.classList.add('player', player.color);
+            newCell.appendChild(playerToken);
+
+            player.position = newPosition;
+        }
+
+        function showAnimation(type) {
+            const animation = document.createElement('div');
+            animation.classList.add('animation');
+
+            const img = document.createElement('img');
+            img.src = type === 'ladder' ? '' : '';
+            img.alt = type;
+
+            animation.appendChild(img);
+            document.body.appendChild(animation);
+
+            setTimeout(() => {
+                animation.remove();
+            }, 2000);
+        }
+
+        rollDiceButton.addEventListener('click', () => {
+            const diceRoll = Math.floor(Math.random() * 6) + 1;
+            diceValue.textContent = diceRoll;
+
+            const currentPlayer = players[currentPlayerIndex];
+            movePlayer(currentPlayer, diceRoll);
+
+            currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+            currentPlayerDisplay.textContent = players[currentPlayerIndex].id;
+        });
+
+        createBoard();
+    </script>
+</body>
+</html>
